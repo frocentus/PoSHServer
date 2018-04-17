@@ -5,106 +5,96 @@
 
 function Confirm-PoSHAdminPrivileges {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to test administrative privileges
+      Function to test administrative privileges
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Confirm-PoSHAdminPrivileges
+      Confirm-PoSHAdminPrivileges
 		
-#>
+  #>
 
-	$User = [Security.Principal.WindowsIdentity]::GetCurrent()
-	if((New-Object Security.Principal.WindowsPrincipal $User).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator))
-	{
-		$Result = "Validated"
-	}
-	$Result
+  $User = [Security.Principal.WindowsIdentity]::GetCurrent()
+  if((New-Object -TypeName Security.Principal.WindowsPrincipal -ArgumentList $User).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) {
+    $Result = 'Validated'
+  }
+  Write-Output $Result
 }
 
 function Confirm-PoSHServerIP {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to verify IP address on server
+      Function to verify IP address on server
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Confirm-PoSHServerIP -IP "192.168.2.1"
+      Confirm-PoSHServerIP -IP "192.168.2.1"
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'IP address')]
+    HelpMessage = 'IP address')]
     [string]$IP
-)
+  )
 
-	# Get Networking Adapter Configuration 
-	$IPConfigs = Get-WmiObject Win32_NetworkAdapterConfiguration
+  # Get Networking Adapter Configuration 
+  $IPConfigs = Get-WmiObject -Class Win32_NetworkAdapterConfiguration
    
-	# Get All IP Addresses 
-	foreach ($IPConfig in $IPConfigs) 
-	{ 
-		if ($IPConfig.IPaddress) 
-		{ 
-			foreach ($IPAddress in $IPConfig.IPaddress) 
-			{ 
-				if ("$IP" -eq "$IPAddress")
-				{
-					$Result = "Validated"
-				}
-			}
-		}
-	}
+  # Get All IP Addresses 
+  foreach ($IPConfig in $IPConfigs) 
+  { 
+    if ($IPConfig.IPaddress) 
+    { 
+      foreach ($IPAddress in $IPConfig.IPaddress) 
+      { 
+        if ("$IP" -eq "$IPAddress")
+        {
+          $Result = 'Validated'
+        }
+      }
+    }
+  }
 	
-	$Result
+  $Result
 }
 
 function Get-DirectoryContent {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to get directory content
+      Function to get directory content
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Get-DirectoryContent -Path "C:\" -HeaderName "poshserver.net" -RequestURL "http://poshserver.net" -SubfolderName "/"
+      Get-DirectoryContent -Path "C:\" -HeaderName "poshserver.net" -RequestURL "http://poshserver.net" -SubfolderName "/"
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'Directory Path')]
+    HelpMessage = 'Directory Path')]
     [string]$Path,
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Header Name')]
     [string]$HeaderName,
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Request URL')]
     [string]$RequestURL,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Subfolder Name')]
     [string]$SubfolderName
-)
+  )
 
-@"
+  @"
 <html>
 <head>
 <title>$($HeaderName)</title>
@@ -113,915 +103,826 @@ param (
 <h1>$($HeaderName) - $($SubfolderName)</h1>
 <hr>
 "@
-$ParentDirectory = $RequestURL + $Subfoldername + "../"
-@"
+  $ParentDirectory = $RequestURL + $Subfoldername + '../'
+  @"
 <a href="$($ParentDirectory)">[To Parent Directory]</a><br><br>
 <table cellpadding="5">
 "@
-$Files = (Get-ChildItem "$Path")
-foreach ($File in $Files)
-{
-$FileURL = $RequestURL + $Subfoldername + $File.Name
-if (!$File.Length) { $FileLength = "[dir]" } else { $FileLength = $File.Length }
-@"
+  $Files = (Get-ChildItem -Path "$Path")
+  foreach ($File in $Files)
+  {
+    $FileURL = $RequestURL + $Subfoldername + $File.Name
+    if (!$File.Length) { $FileLength = '[dir]' } else { $FileLength = $File.Length }
+    @"
 <tr>
 <td align="right">$($File.LastWriteTime)</td>
 <td align="right">$($FileLength)</td>
 <td align="left"><a href="$($FileURL)">$($File.Name)</a></td>
 </tr>
 "@
-}
-@"
+  }
+  @'
 </table>
 <hr>
 </body>
 </html>
-"@
+'@
 }
 
 function New-PoSHLogHash {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to hash PoSHServer log file
+      Function to hash PoSHServer log file
 
-    .EXAMPLE
+      .EXAMPLE
      
-        New-PoSHLogHash -LogSchedule "Hourly" -LogDirectory "C:\inetpub\logs"
+      New-PoSHLogHash -LogSchedule "Hourly" -LogDirectory "C:\inetpub\logs"
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'Log Schedule')]
+    HelpMessage = 'Log Schedule')]
     [string]$LogSchedule,
 
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'Log Directory Path')]
+    HelpMessage = 'Log Directory Path')]
     [string]$LogDirectory,
 	
-	[Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Debug Mode')]
-    $DebugMode = $false
-)
+    [bool]$DebugMode = $false
+  )
 
-	if ($LogSchedule -eq "Hourly")
-	{
-		$LogNameFormatLastHour = (Get-Date).AddHours(-1).ToString("yyMMddHH")
-		$LogFileNameLastHour = "u_ex" + $LogNameFormatLastHour + ".log"
-		$LogFilePathLastHour = $LogDirectory + "\" + $LogFileNameLastHour
-		$SigFileName = "u_ex" + $LogNameFormatLastHour + ".sign"
-		$SigFilePath = $LogDirectory + "\" + $SigFileName
-		$DateFileName = "u_ex" + $LogNameFormatLastHour + ".date"
-		$DateFilePath = $LogDirectory + "\" + $DateFileName
-		$LastLogFilePath = $LogFilePathLastHour
-	}
-	else
-	{
-		$LogNameFormatYesterday = (Get-Date).AddDays(-1).ToString("yyMMdd")
-		$LogFileNameYesterday = "u_ex" + $LogNameFormatYesterday + ".log"
-		$LogFilePathYesterday = $LogDirectory + "\" + $LogFileNameYesterday
-		$SigFileName = "u_ex" + $LogNameFormatYesterday + ".sign"
-		$SigFilePath = $LogDirectory + "\" + $SigFileName
-		$DateFileName = "u_ex" + $LogNameFormatYesterday + ".date"
-		$DateFilePath = $LogDirectory + "\" + $DateFileName
-		$LastLogFilePath = $LogFilePathYesterday
-	}
+  if ($LogSchedule -eq 'Hourly')
+  {
+    $LogNameFormatLastHour = (Get-Date).AddHours(-1).ToString('yyMMddHH')
+    $LogFileNameLastHour = 'u_ex' + $LogNameFormatLastHour + '.log'
+    $LogFilePathLastHour = $LogDirectory + '\' + $LogFileNameLastHour
+    $SigFileName = 'u_ex' + $LogNameFormatLastHour + '.sign'
+    $SigFilePath = $LogDirectory + '\' + $SigFileName
+    $DateFileName = 'u_ex' + $LogNameFormatLastHour + '.date'
+    $DateFilePath = $LogDirectory + '\' + $DateFileName
+    $LastLogFilePath = $LogFilePathLastHour
+  }
+  else
+  {
+    $LogNameFormatYesterday = (Get-Date).AddDays(-1).ToString('yyMMdd')
+    $LogFileNameYesterday = 'u_ex' + $LogNameFormatYesterday + '.log'
+    $LogFilePathYesterday = $LogDirectory + '\' + $LogFileNameYesterday
+    $SigFileName = 'u_ex' + $LogNameFormatYesterday + '.sign'
+    $SigFilePath = $LogDirectory + '\' + $SigFileName
+    $DateFileName = 'u_ex' + $LogNameFormatYesterday + '.date'
+    $DateFilePath = $LogDirectory + '\' + $DateFileName
+    $LastLogFilePath = $LogFilePathYesterday
+  }
 
-	if ([System.IO.File]::Exists($LastLogFilePath))  
-	{
-		if (![System.IO.File]::Exists($SigFilePath))
-		{
-			$LogHashJobArgs = @($LastLogFilePath,$SigFilePath,$DateFilePath)
+  if ([System.IO.File]::Exists($LastLogFilePath))  
+  {
+    if (![System.IO.File]::Exists($SigFilePath))
+    {
+      $LogHashJobArgs = @($LastLogFilePath,$SigFilePath,$DateFilePath)
 			
-			try
-			{
-				$LogHashJob = Start-Job -ScriptBlock {
-					param ($LastLogFilePath, $SigFilePath, $DateFilePath)
-					if (![System.IO.File]::Exists($DateFilePath))  
-					{
-						$HashAlgorithm = "MD5"
-						$HashType = [Type] "System.Security.Cryptography.$HashAlgorithm"
-						$Hasher = $HashType::Create()
-						$DateString = Get-Date -uformat "%d.%m.%Y"
-						$TimeString = (w32tm /stripchart /computer:time.ume.tubitak.gov.tr /samples:1)[-1].split("")[0]
-						$DateString = $DateString + " " + $TimeString
-						$InputStream = New-Object IO.StreamReader $LastLogFilePath
-						$HashBytes = $Hasher.ComputeHash($InputStream.BaseStream)
-						$InputStream.Close()
-						$Builder = New-Object System.Text.StringBuilder
-						$HashBytes | Foreach-Object { [void] $Builder.Append($_.ToString("X2")) }
-						$HashString = $Builder.ToString()
-						$HashString = $HashString + " " + $DateString
-						$Stream = [System.IO.StreamWriter]$SigFilePath
-						$Stream.Write($HashString)
-						$Stream.Close()
-						$Stream = [System.IO.StreamWriter]$DateFilePath
-						$Stream.Write($DateString)
-						$Stream.Close()
-						$InputStream = New-Object IO.StreamReader $SigFilePath
-						$HashBytes = $Hasher.ComputeHash($InputStream.BaseStream)
-						$InputStream.Close()
-						$Builder = New-Object System.Text.StringBuilder
-						$HashBytes | Foreach-Object { [void] $Builder.Append($_.ToString("X2")) }
-						$HashString = $Builder.ToString()
-						$Stream = [System.IO.StreamWriter]$SigFilePath
-						$Stream.Write($HashString)
-						$Stream.Close()
-					}
-				} -ArgumentList $LogHashJobArgs	
-			}
-			catch
-			{
-				Add-Content -Value $_ -Path "$LogDirectory\debug.txt"
-			}
-		}
-	}
-	else
-	{
-		Add-Content -Value "Could not find log file." -Path "$LogDirectory\debug.txt"
-	}
+      try
+      {
+        $LogHashJob = Start-Job -ScriptBlock {
+          param ($LastLogFilePath, $SigFilePath, $DateFilePath)
+          if (![System.IO.File]::Exists($DateFilePath))  
+          {
+            $HashAlgorithm = 'MD5'
+            $HashType = [Type] "System.Security.Cryptography.$HashAlgorithm"
+            $Hasher = $HashType::Create()
+            $DateString = Get-Date -uformat '%d.%m.%Y'
+            $TimeString = (& "$env:windir\system32\w32tm.exe" /stripchart /computer:time.ume.tubitak.gov.tr /samples:1)[-1].split('')[0]
+            $DateString = $DateString + ' ' + $TimeString
+            $InputStream = New-Object -TypeName IO.StreamReader -ArgumentList $LastLogFilePath
+            $HashBytes = $Hasher.ComputeHash($InputStream.BaseStream)
+            $InputStream.Close()
+            $Builder = New-Object -TypeName System.Text.StringBuilder
+            $HashBytes | Foreach-Object { $null =  $Builder.Append($_.ToString('X2')) }
+            $HashString = $Builder.ToString()
+            $HashString = $HashString + ' ' + $DateString
+            $Stream = [System.IO.StreamWriter]$SigFilePath
+            $Stream.Write($HashString)
+            $Stream.Close()
+            $Stream = [System.IO.StreamWriter]$DateFilePath
+            $Stream.Write($DateString)
+            $Stream.Close()
+            $InputStream = New-Object -TypeName IO.StreamReader -ArgumentList $SigFilePath
+            $HashBytes = $Hasher.ComputeHash($InputStream.BaseStream)
+            $InputStream.Close()
+            $Builder = New-Object -TypeName System.Text.StringBuilder
+            $HashBytes | Foreach-Object { $null =  $Builder.Append($_.ToString('X2')) }
+            $HashString = $Builder.ToString()
+            $Stream = [System.IO.StreamWriter]$SigFilePath
+            $Stream.Write($HashString)
+            $Stream.Close()
+          }
+        } -ArgumentList $LogHashJobArgs	
+      }
+      catch
+      {
+        Add-Content -Value $_ -Path "$LogDirectory\debug.txt"
+      }
+    }
+  }
+  else
+  {
+    Add-Content -Value 'Could not find log file.' -Path "$LogDirectory\debug.txt"
+  }
 }
 
 function Start-PoSHLogParser {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to parse PoSHServer log files
+      Function to parse PoSHServer log files
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Start-PoSHLogParser -LogPath "C:\inetpub\logs\hourly.log"
+      Start-PoSHLogParser -LogPath "C:\inetpub\logs\hourly.log"
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'Log Path')]
+    HelpMessage = 'Log Path')]
     [string]$LogPath
-)
+  )
 
-	$File = $LogPath
-	$Log = Get-Content $File | where {$_ -notLike "#[D,S-V]*" }
-	$Columns = (($Log[0].TrimEnd()) -replace "#Fields: ", "" -replace "-","" -replace "\(","" -replace "\)","").Split(" ")
-	$Count = $Columns.Length
-	$Rows = $Log | where {$_ -notLike "#Fields"}
-	$IISLog = New-Object System.Data.DataTable "IISLog"
-	foreach ($Column in $Columns) 
-	{
-		$NewColumn = New-Object System.Data.DataColumn $Column, ([string])
-		$IISLog.Columns.Add($NewColumn)
-	}
-	foreach ($Row in $Rows) 
-	{
-		$Row = $Row.Split(" ")
-		$AddRow = $IISLog.newrow()
-		for($i=0;$i -lt $Count; $i++) 
-		{
-			$ColumnName = $Columns[$i]
-			$AddRow.$ColumnName = $Row[$i]
-		}
-		$IISLog.Rows.Add($AddRow)
-	}
-	$IISLog
+  $File = $LogPath
+  $Log = Get-Content -Path $File | Where-Object {$_ -notLike '#[D,S-V]*' }
+  $Columns = (($Log[0].TrimEnd()) -replace '#Fields: ', '' -replace '-','' -replace '\(','' -replace '\)','').Split(' ')
+  $Count = $Columns.Length
+  $Rows = $Log | Where-Object {$_ -notLike '#Fields'}
+  $IISLog = New-Object -TypeName System.Data.DataTable -ArgumentList 'IISLog'
+  foreach ($Column in $Columns) 
+  {
+    $NewColumn = New-Object -TypeName System.Data.DataColumn -ArgumentList $Column, ([string])
+    $IISLog.Columns.Add($NewColumn)
+  }
+  foreach ($Row in $Rows) 
+  {
+    $Row = $Row.Split(' ')
+    $AddRow = $IISLog.newrow()
+    for($i=0;$i -lt $Count; $i++) 
+    {
+      $ColumnName = $Columns[$i]
+      $AddRow.$ColumnName = $Row[$i]
+    }
+    $IISLog.Rows.Add($AddRow)
+  }
+  $IISLog
 }
 
 function Get-MimeType {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to get mime types
+      Function to get mime types
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Get-MimeType -Extension ".jpg"
+      Get-MimeType -Extension ".jpg"
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Extension')]
     [string]$Extension
-)
+  )
 	
-	switch ($Extension) 
-	{ 
-		.ps1 {"text/ps1"}
-		.psxml {"text/psxml"}
-		.psapi {"text/psxml"}
-		.posh {"text/psxml"}
-		.html {"text/html"} 
-		.htm {"text/html"} 
-		.php {"text/php"} 
-		.css {"text/css"} 
-		.jpeg {"image/jpeg"} 
-		.jpg {"image/jpeg"}
-		.gif {"image/gif"}
-		.ico {"image/x-icon"}
-		.flv {"video/x-flv"}
-		.swf {"application/x-shockwave-flash"}
-		.js {"text/javascript"}
-		.txt {"text/plain"}
-		.rar {"application/octet-stream"}
-		.zip {"application/x-zip-compressed"}
-		.rss {"application/rss+xml"}
-		.xml {"text/xml"}
-		.pdf {"application/pdf"}
-		.png {"image/png"}
-		.mpg {"video/mpeg"}
-		.mpeg {"video/mpeg"}
-		.mp3 {"audio/mpeg"}
-		.oga {"audio/ogg"}
-		.spx {"audio/ogg"}
-		.mp4 {"video/mp4"}
-		.m4v {"video/m4v"}
-		.ogg {"video/ogg"}
-		.ogv {"video/ogg"}
-		.webm {"video/webm"}
-		.wmv {"video/x-ms-wmv"}
-		.woff {"application/x-font-woff"}
-		.eot {"application/vnd.ms-fontobject"}
-		.svg {"image/svg+xml"}
-		.svgz {"image/svg+xml"}
-		.otf {"font/otf"}
-		.ttf {"application/x-font-ttf"}
-		.xht {"application/xhtml+xml"}
-		.xhtml {"application/xhtml+xml"}
-		default {"text/html"}
-	}	
+  switch ($Extension) 
+  { 
+    .ps1 {'text/ps1'}
+    .psxml {'text/psxml'}
+    .psapi {'text/psxml'}
+    .posh {'text/psxml'}
+    .html {'text/html'} 
+    .htm {'text/html'} 
+    .php {'text/php'} 
+    .css {'text/css'} 
+    .jpeg {'image/jpeg'} 
+    .jpg {'image/jpeg'}
+    .gif {'image/gif'}
+    .ico {'image/x-icon'}
+    .flv {'video/x-flv'}
+    .swf {'application/x-shockwave-flash'}
+    .js {'text/javascript'}
+    .txt {'text/plain'}
+    .rar {'application/octet-stream'}
+    .zip {'application/x-zip-compressed'}
+    .rss {'application/rss+xml'}
+    .xml {'text/xml'}
+    .pdf {'application/pdf'}
+    .png {'image/png'}
+    .mpg {'video/mpeg'}
+    .mpeg {'video/mpeg'}
+    .mp3 {'audio/mpeg'}
+    .oga {'audio/ogg'}
+    .spx {'audio/ogg'}
+    .mp4 {'video/mp4'}
+    .m4v {'video/m4v'}
+    .ogg {'video/ogg'}
+    .ogv {'video/ogg'}
+    .webm {'video/webm'}
+    .wmv {'video/x-ms-wmv'}
+    .woff {'application/x-font-woff'}
+    .eot {'application/vnd.ms-fontobject'}
+    .svg {'image/svg+xml'}
+    .svgz {'image/svg+xml'}
+    .otf {'font/otf'}
+    .ttf {'application/x-font-ttf'}
+    .xht {'application/xhtml+xml'}
+    .xhtml {'application/xhtml+xml'}
+    default {'text/html'}
+  }	
 }
 
 function Get-PoSHPHPContent {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to get php content
+      Function to get php content
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Get-PoSHPHPContent -PHPCgiPath "C:\php.exe" -File "C:\test.php" -PoSHPHPGET "test=value"
+      Get-PoSHPHPContent -PHPCgiPath "C:\php.exe" -File "C:\test.php" -PoSHPHPGET "test=value"
 		
-    .EXAMPLE
+      .EXAMPLE
      
-        Get-PoSHPHPContent -PHPCgiPath "C:\php.exe" -File "C:\test.php" -PoSHPHPPOST "test=value"
+      Get-PoSHPHPContent -PHPCgiPath "C:\php.exe" -File "C:\test.php" -PoSHPHPPOST "test=value"
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'PHP-Cgi Path')]
+    HelpMessage = 'PHP-Cgi Path')]
     [string]$PHPCgiPath,
 
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'File Path')]
+    HelpMessage = 'File Path')]
     [string]$File,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'PHP GET String')]
     [string]$PoSHPHPGET,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'PHP POST String')]
     [string]$PoSHPHPPOST
-)
+  )
 
-	# Set PHP Environment
-	$env:GATEWAY_INTERFACE="CGI/1.1"
-	$env:SCRIPT_FILENAME="$File"
-	$env:REDIRECT_STATUS="200"
-	$env:SERVER_PROTOCOL="HTTP/1.1"
-	$env:HTTP_ACCEPT="text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-	$env:CONTENT_TYPE="application/x-www-form-urlencoded"
+  # Set PHP Environment
+  $env:GATEWAY_INTERFACE='CGI/1.1'
+  $env:SCRIPT_FILENAME="$File"
+  $env:REDIRECT_STATUS='200'
+  $env:SERVER_PROTOCOL='HTTP/1.1'
+  $env:HTTP_ACCEPT='text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  $env:CONTENT_TYPE='application/x-www-form-urlencoded'
 	
-	if ($PoSHPHPPOST)
-	{
-		# Set PHP POST Environment
-		$env:REQUEST_METHOD="POST"
-		$PHP_CONTENT_LENGTH = $PoSHPHPPOST.Length
-		$env:CONTENT_LENGTH="$PHP_CONTENT_LENGTH"
+  if ($PoSHPHPPOST)
+  {
+    # Set PHP POST Environment
+    $env:REQUEST_METHOD='POST'
+    $PHP_CONTENT_LENGTH = $PoSHPHPPOST.Length
+    $env:CONTENT_LENGTH="$PHP_CONTENT_LENGTH"
 		
-		# Get PHP Content
-		$PHPOutput = "$PoSHPHPPOST" | &$PHPCgiPath
-	}
-	else
-	{
-		# Set PHP GET Environment
-		$env:REQUEST_METHOD="GET"
-		$env:QUERY_STRING="$PoSHPHPGET"
+    # Get PHP Content
+    $PHPOutput = "$PoSHPHPPOST" | &$PHPCgiPath
+  }
+  else
+  {
+    # Set PHP GET Environment
+    $env:REQUEST_METHOD='GET'
+    $env:QUERY_STRING="$PoSHPHPGET"
 		
-		# Get PHP Content
-		$PHPOutput = &$PHPCgiPath
-	}
+    # Get PHP Content
+    $PHPOutput = &$PHPCgiPath
+  }
 	
-	# Get PHP Header Line Number
-	$PHPHeaderLineNumber = ($PHPOutput | Select-String -Pattern "^$")[0].LineNumber
+  # Get PHP Header Line Number
+  $PHPHeaderLineNumber = ($PHPOutput | Select-String -Pattern '^$')[0].LineNumber
 	
-	# Get PHP Header
-	$PHPHeader = $PHPOutput | Select -First $PHPHeaderLineNumber
+  # Get PHP Header
+  $PHPHeader = $PHPOutput | Select-Object -First $PHPHeaderLineNumber
 	
-	# Get Redirection Location
-	$GetPHPLocation = $PHPHeader | Select-String "Location:"
+  # Get Redirection Location
+  $GetPHPLocation = $PHPHeader | Select-String -Pattern 'Location:'
 	
-	# Check Redirection Location
-	if ($GetPHPLocation)
-	{
-		$GetPHPLocation = $GetPHPLocation -match 'Location: (.*)/?'
-		if ($GetPHPLocation -eq $True) { $PHPRedirectionURL = $Matches[1] } else { $PHPRedirectionURL = $Null; }
-	}
+  # Check Redirection Location
+  if ($GetPHPLocation)
+  {
+    $GetPHPLocation = $GetPHPLocation -match 'Location: (.*)/?'
+    if ($GetPHPLocation -eq $True) { 
+      $PHPRedirectionURL = $Matches[1] 
+    } else { 
+      $PHPRedirectionURL = $Null 
+    }
+  }
 	
-	# Redirect to Location
-	if ($PHPRedirectionURL)
-	{
-		# Redirection Output
-		$PHPRedirection = '<html>'
-		$PHPRedirection += '<script type="text/javascript">'
-		$PHPRedirection += 'window.location = "' + $PHPRedirectionURL + '"'
-		$PHPRedirection += '</script>'
-		$PHPRedirection += '</html>'
-		$PHPRedirection
-	}
-	else
-	{	
-		# Output PHP Content
-		$PHPOutput = $PHPOutput | Select -Skip $PHPHeaderLineNumber
-		$PHPOutput
-	}
+  # Redirect to Location
+  if ($PHPRedirectionURL)
+  {
+    # Redirection Output
+    $PHPRedirection = '<html>'
+    $PHPRedirection += '<script type="text/javascript">'
+    $PHPRedirection += 'window.location = "' + $PHPRedirectionURL + '"'
+    $PHPRedirection += '</script>'
+    $PHPRedirection += '</html>'
+    $PHPRedirection
+  }
+  else
+  {	
+    # Output PHP Content
+    $PHPOutput = $PHPOutput | Select-Object -Skip $PHPHeaderLineNumber
+    $PHPOutput
+  }
 }
 
 function Get-PoSHPostStream {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to get php post stream
+      Function to get php post stream
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Get-PoSHPostStream -InputStream $InputStream -ContentEncoding $ContentEncoding
+      Get-PoSHPostStream -InputStream $InputStream -ContentEncoding $ContentEncoding
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'Input Stream')]
+    HelpMessage = 'Input Stream')]
     $InputStream,
 	
     [Parameter(
         Mandatory = $true,
-        HelpMessage = 'Content Encoding')]
+    HelpMessage = 'Content Encoding')]
     $ContentEncoding
-)
+  )
 
-	$PoSHCommand = New-Object IO.StreamReader ($InputStream,$ContentEncoding)
-	$PoSHCommand = $PoSHCommand.ReadToEnd()
-	$PoSHCommand = $PoSHCommand.ToString()
+  $PoSHCommand = New-Object -TypeName IO.StreamReader -ArgumentList ($InputStream,$ContentEncoding)
+  $PoSHCommand = $PoSHCommand.ReadToEnd()
+  $PoSHCommand = $PoSHCommand.ToString()
 	
-	if ($PoSHCommand)
-	{
-		$PoSHCommand = $PoSHCommand -replace('\+'," ")
-		$PoSHCommand = $PoSHCommand -replace("%20"," ")
-		$PoSHCommand = $PoSHCommand -replace("%21","!")
-		$PoSHCommand = $PoSHCommand -replace('%22','"')
-		$PoSHCommand = $PoSHCommand -replace("%23","#")
-		$PoSHCommand = $PoSHCommand -replace("%24","$")
-		$PoSHCommand = $PoSHCommand -replace("%25","%")
-		$PoSHCommand = $PoSHCommand -replace("%27","'")
-		$PoSHCommand = $PoSHCommand -replace("%28","(")
-		$PoSHCommand = $PoSHCommand -replace("%29",")")
-		$PoSHCommand = $PoSHCommand -replace("%2A","*")
-		$PoSHCommand = $PoSHCommand -replace("%2B","+")
-		$PoSHCommand = $PoSHCommand -replace("%2C",",")
-		$PoSHCommand = $PoSHCommand -replace("%2D","-")
-		$PoSHCommand = $PoSHCommand -replace("%2E",".")
-		$PoSHCommand = $PoSHCommand -replace("%2F","/")
-		$PoSHCommand = $PoSHCommand -replace("%3A",":")
-		$PoSHCommand = $PoSHCommand -replace("%3B",";")
-		$PoSHCommand = $PoSHCommand -replace("%3C","<")
-		$PoSHCommand = $PoSHCommand -replace("%3E",">")
-		$PoSHCommand = $PoSHCommand -replace("%3F","?")
-		$PoSHCommand = $PoSHCommand -replace("%5B","[")
-		$PoSHCommand = $PoSHCommand -replace("%5C","\")
-		$PoSHCommand = $PoSHCommand -replace("%5D","]")
-		$PoSHCommand = $PoSHCommand -replace("%5E","^")
-		$PoSHCommand = $PoSHCommand -replace("%5F","_")
-		$PoSHCommand = $PoSHCommand -replace("%7B","{")
-		$PoSHCommand = $PoSHCommand -replace("%7C","|")
-		$PoSHCommand = $PoSHCommand -replace("%7D","}")
-		$PoSHCommand = $PoSHCommand -replace("%7E","~")
-		$PoSHCommand = $PoSHCommand -replace("%7F","_")
-		$PoSHCommand = $PoSHCommand -replace("%7F%25","%")
-		$PoSHPostStream = $PoSHCommand
-		$PoSHCommand = $PoSHCommand.Split("&")
+  if ($PoSHCommand)
+  {
+    $PoSHCommand = $PoSHCommand -replace('\+',' ')
+    $PoSHCommand = $PoSHCommand -replace('%20',' ')
+    $PoSHCommand = $PoSHCommand -replace('%21','!')
+    $PoSHCommand = $PoSHCommand -replace('%22','"')
+    $PoSHCommand = $PoSHCommand -replace('%23','#')
+    $PoSHCommand = $PoSHCommand -replace('%24','$')
+    $PoSHCommand = $PoSHCommand -replace('%25','%')
+    $PoSHCommand = $PoSHCommand -replace('%27',"'")
+    $PoSHCommand = $PoSHCommand -replace('%28','(')
+    $PoSHCommand = $PoSHCommand -replace('%29',')')
+    $PoSHCommand = $PoSHCommand -replace('%2A','*')
+    $PoSHCommand = $PoSHCommand -replace('%2B','+')
+    $PoSHCommand = $PoSHCommand -replace('%2C',',')
+    $PoSHCommand = $PoSHCommand -replace('%2D','-')
+    $PoSHCommand = $PoSHCommand -replace('%2E','.')
+    $PoSHCommand = $PoSHCommand -replace('%2F','/')
+    $PoSHCommand = $PoSHCommand -replace('%3A',':')
+    $PoSHCommand = $PoSHCommand -replace('%3B',';')
+    $PoSHCommand = $PoSHCommand -replace('%3C','<')
+    $PoSHCommand = $PoSHCommand -replace('%3E','>')
+    $PoSHCommand = $PoSHCommand -replace('%3F','?')
+    $PoSHCommand = $PoSHCommand -replace('%5B','[')
+    $PoSHCommand = $PoSHCommand -replace('%5C','\')
+    $PoSHCommand = $PoSHCommand -replace('%5D',']')
+    $PoSHCommand = $PoSHCommand -replace('%5E','^')
+    $PoSHCommand = $PoSHCommand -replace('%5F','_')
+    $PoSHCommand = $PoSHCommand -replace('%7B','{')
+    $PoSHCommand = $PoSHCommand -replace('%7C','|')
+    $PoSHCommand = $PoSHCommand -replace('%7D','}')
+    $PoSHCommand = $PoSHCommand -replace('%7E','~')
+    $PoSHCommand = $PoSHCommand -replace('%7F','_')
+    $PoSHCommand = $PoSHCommand -replace('%7F%25','%')
+    $PoSHPostStream = $PoSHCommand
+    $PoSHCommand = $PoSHCommand.Split('&')
 
-		$Properties = New-Object Psobject
-		$Properties | Add-Member Noteproperty PoSHPostStream $PoSHPostStream
-		foreach ($Post in $PoSHCommand)
-		{
-			$PostValue = $Post.Replace("%26","&")
-			$PostContent = $PostValue.Split("=")
-			$PostName = $PostContent[0] -replace("%3D","=")
-			$PostValue = $PostContent[1] -replace("%3D","=")
+    $Properties = New-Object -TypeName Psobject
+    $Properties | Add-Member -NotePropertyName Noteproperty -NotePropertyValue PoSHPostStream -InputObject $PoSHPostStream
+    foreach ($Post in $PoSHCommand)
+    {
+      $PostValue = $Post.Replace('%26','&')
+      $PostContent = $PostValue.Split('=')
+      $PostName = $PostContent[0] -replace('%3D','=')
+      $PostValue = $PostContent[1] -replace('%3D','=')
 
-			if ($PostName.EndsWith("[]"))
-			{
-				$PostName = $PostName.Substring(0,$PostName.Length-2)
+      if ($PostName.EndsWith('[]'))
+      {
+        $PostName = $PostName.Substring(0,$PostName.Length-2)
 
-				if (!(New-Object PSObject -Property @{PostName=@()}).PostName)
-				{
-					$Properties | Add-Member NoteProperty $Postname (@())
-					$Properties."$PostName" += $PostValue
-				}
-				else
-				{
-					$Properties."$PostName" += $PostValue
-				}
-			} 
-			else
-			{
-				$Properties | Add-Member NoteProperty $PostName $PostValue
-			}
-		}
-		Write-Output $Properties
-	}
+        if (!(New-Object -TypeName PSObject -Property @{PostName=@()}).PostName)
+        {
+          $Properties | Add-Member -NotePropertyName NoteProperty -NotePropertyValue $Postname -InputObject (@())
+          $Properties."$PostName" += $PostValue
+        }
+        else
+        {
+          $Properties."$PostName" += $PostValue
+        }
+      } 
+      else
+      {
+        $Properties | Add-Member -NotePropertyName NoteProperty -NotePropertyValue $PostName -InputObject $PostValue
+      }
+    }
+    Write-Output -InputObject $Properties
+  }
 }
 
 function Get-PoSHQueryString {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to get query string
+      Function to get query string
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Get-PoSHQueryString -Request $Request
+      Get-PoSHQueryString -Request $Request
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Request')]
     $Request
-)
+  )
 
-	if ($Request)
-	{
-		$PoSHQueryString = $Request.RawUrl.Split("?")[1]		
-		$QueryStrings = $Request.QueryString
+  if ($Request)
+  {
+    $PoSHQueryString = $Request.RawUrl.Split('?')[1]		
+    $QueryStrings = $Request.QueryString
 		
-		$Properties = New-Object Psobject
-		$Properties | Add-Member Noteproperty PoSHQueryString $PoSHQueryString
-		foreach ($Query in $QueryStrings)
-		{
-			$QueryString = $Request.QueryString["$Query"]
-			if ($QueryString -and $Query)
-			{
-				$Properties | Add-Member Noteproperty $Query $QueryString
-			}
-		}
-		Write-Output $Properties
-	}
+    $Properties = New-Object -TypeName Psobject
+    $Properties | Add-Member -NotePropertyName Noteproperty -NotePropertyValue PoSHQueryString -InputObject $PoSHQueryString
+    foreach ($Query in $QueryStrings)
+    {
+      $QueryString = $Request.QueryString["$Query"]
+      if ($QueryString -and $Query)
+      {
+        $Properties | Add-Member -NotePropertyName Noteproperty -NotePropertyValue $Query -InputObject $QueryString
+      }
+    }
+    Write-Output -InputObject $Properties
+  }
 }
 
 function Get-PoSHWelcomeBanner {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to get welcome banner
+      Function to get welcome banner
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Get-PoSHWelcomeBanner -Hostname "localhost" -Port "8080" -SSL $True -SSLIP "10.10.10.2" -SSLPort "8443"
+      Get-PoSHWelcomeBanner -Hostname "localhost" -Port "8080" -SSL $True -SSLIP "10.10.10.2" -SSLPort "8443"
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'IP Address or Hostname')]
-	[Alias('IP')]
+    [Alias('IP')]
     [string]$Hostname,
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Port Number')]
     [string]$Port,
 
-	[Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Enable SSL')]
     $SSL = $false,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'SSL IP Address')]
     [string]$SSLIP,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'SSL Port Number')]
     [string]$SSLPort,
 	
-	[Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Debug Mode')]
     $DebugMode = $false
-)
+  )
 	
-	# Get Hostname
-	if (!$Hostname -or $Hostname -eq "+") 
-	{
-		$Hostname = "localhost"
-	}
-	else
-	{
-		$Hostname = @($Hostname.Split(","))[0]
-	}
+  # Get Hostname
+  if (!$Hostname -or $Hostname -eq '+') 
+  {
+    $Hostname = 'localhost'
+  }
+  else
+  {
+    $Hostname = @($Hostname.Split(','))[0]
+  }
 	
-	# Get Port
-	if ($Port -ne "80")
-	{
-		$Port = ":$Port"
-	}
-	else
-	{
-		$Port = $null
-	}
+  # Get Port
+  if ($Port -ne '80')
+  {
+    $Port = ":$Port"
+  }
+  else
+  {
+    $Port = $null
+  }
 	
-	if ($SSL)
-	{
-		# Get SSL Hostname
-		if (!$SSLIP -or $SSLIP -eq "+") 
-		{
-			$SSLIP = "localhost"
-		}
-		else
-		{
-			$SSLIP = @($SSLIP.Split(","))[0]
-		}
+  if ($SSL)
+  {
+    # Get SSL Hostname
+    if (!$SSLIP -or $SSLIP -eq '+') 
+    {
+      $SSLIP = 'localhost'
+    }
+    else
+    {
+      $SSLIP = @($SSLIP.Split(','))[0]
+    }
 		
-		# Get SSL Port
-		if ($SSLPort -eq "443")
-		{
-			$SSLPort = "/"
-		}
-		else
-		{
-			$SSLPort = ":$SSLPort"
-		}
-	}
+    # Get SSL Port
+    if ($SSLPort -eq '443')
+    {
+      $SSLPort = '/'
+    }
+    else
+    {
+      $SSLPort = ":$SSLPort"
+    }
+  }
 	
-	if (!$DebugMode)
-	{
-		clear
-	}
+  if (!$DebugMode)
+  {
+    Clear-Host
+  }
 	
-	Write-Host " "
-	Write-Host "  Welcome to PoSH Server"
-	Write-Host " "
-	Write-Host " "
-	Write-Host "  You can start browsing your webpage from:"
-	Write-Host "  http://$Hostname$Port"
+  Write-Host ' '
+  Write-Host '  Welcome to PoSH Server'
+  Write-Host ' '
+  Write-Host ' '
+  Write-Host '  You can start browsing your webpage from:'
+  Write-Host "  http://$Hostname$Port"
 	
-	if ($SSL)
-	{	
-		if ($SSLPort -eq "/")
-		{
-			Write-Host "  https://$SSLIP"
-		}
-		else
-		{
-			Write-Host "  https://$SSLIP$SSLPort"
-		}
-	}
+  if ($SSL)
+  {	
+    if ($SSLPort -eq '/')
+    {
+      Write-Host "  https://$SSLIP"
+    }
+    else
+    {
+      Write-Host "  https://$SSLIP$SSLPort"
+    }
+  }
 	
-	Write-Host " "
-	Write-Host " "
-	Write-Host "  Thanks for using PoSH Server.."
-	Write-Host " "
-	Write-Host " "
-	Write-Host " "
+  Write-Host ' '
+  Write-Host ' '
+  Write-Host '  Thanks for using PoSH Server..'
+  Write-Host ' '
+  Write-Host ' '
+  Write-Host ' '
 }
 
 function New-PoSHAPIXML {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to create PoSHAPI XML
+      Function to create PoSHAPI XML
 
-    .EXAMPLE
+      .EXAMPLE
      
-        New-PoSHAPIXML -ResultCode "1" -ResultMessage "Service unavailable" -RootTag "Result" -ItemTag "OperationResult" -Details
+      New-PoSHAPIXML -ResultCode "1" -ResultMessage "Service unavailable" -RootTag "Result" -ItemTag "OperationResult" -Details
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Result Code')]
-    $ResultCode = "-1",
+    $ResultCode = '-1',
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Result Message')]
-    $ResultMessage = "The operation failed",
+    $ResultMessage = 'The operation failed',
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Root Tag')]
-    $RootTag = "Result",
+    $RootTag = 'Result',
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Item Tag')]
-    $ItemTag = "OperationResult",
+    $ItemTag = 'OperationResult',
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Child Items')]
-    $ChildItems = "*",
+    $ChildItems = '*',
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Attributes')]
     $Attributes = $Null,
 
-	[Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Details')]
     $Details = $false
-)
+  )
 
-Begin {
+  Begin {
 	
-	$xml = "<?xml version=""1.0"" encoding=""utf-8""?>`n"
-	$xml += "<$RootTag>`n"
-	$xml += " <Code>$ResultCode</Code>`n"
-	$xml += " <Message>$ResultMessage</Message>`n"
-}
+    $xml = "<?xml version=""1.0"" encoding=""utf-8""?>`n"
+    $xml += "<$RootTag>`n"
+    $xml += " <Code>$ResultCode</Code>`n"
+    $xml += " <Message>$ResultMessage</Message>`n"
+  }
 
-Process {
+  Process {
 
-	if ($Details)
-	{
-		$xml += " <$ItemTag"
-		if ($Attributes)
-		{
-			foreach ($attr in $_ | Get-Member -type *Property $attributes)
-			{ 
-				$name = $attr.Name
-				$xml += " $Name=`"$($_.$Name)`""
-			}
-		}
-		$xml += ">`n"
-		foreach ($child in $_ | Get-Member -Type *Property $childItems)
-		{
-			$name = $child.Name
-			$xml += " <$Name>$($_.$Name)</$Name>`n"
-		}
-		$xml += " </$ItemTag>`n"
-	}
-}
+    if ($Details)
+    {
+      $xml += " <$ItemTag"
+      if ($Attributes)
+      {
+        foreach ($attr in $_ | Get-Member -MemberType *Property -Name $attributes)
+        { 
+          $name = $attr.Name
+          $xml += " $Name=`"$($_.$Name)`""
+        }
+      }
+      $xml += ">`n"
+      foreach ($child in $_ | Get-Member -MemberType *Property -Name $childItems)
+      {
+        $name = $child.Name
+        $xml += " <$Name>$($_.$Name)</$Name>`n"
+      }
+      $xml += " </$ItemTag>`n"
+    }
+  }
 
-End {
+  End {
 
-	$xml += "</$RootTag>`n"
-	$xml
-}
+    $xml += "</$RootTag>`n"
+    $xml
+  }
 }
 
 function Request-PoSHCertificate {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to create PoSH Certificate request
+      Function to create PoSH Certificate request
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Request-PoSHCertificate
+      Request-PoSHCertificate
 		
-#>
+  #>
 
-	$SSLSubject = "PoSHServer"
-	$SSLName = New-Object -com "X509Enrollment.CX500DistinguishedName.1"
-	$SSLName.Encode("CN=$SSLSubject", 0)
-	$SSLKey = New-Object -com "X509Enrollment.CX509PrivateKey.1"
-	$SSLKey.ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
-	$SSLKey.KeySpec = 1
-	$SSLKey.Length = 2048
-	$SSLKey.SecurityDescriptor = "D:PAI(A;;0xd01f01ff;;;SY)(A;;0xd01f01ff;;;BA)(A;;0x80120089;;;NS)"
-	$SSLKey.MachineContext = 1
-	$SSLKey.ExportPolicy = 1
-	$SSLKey.Create()
-	$SSLObjectId = New-Object -com "X509Enrollment.CObjectIds.1"
-	$SSLServerId = New-Object -com "X509Enrollment.CObjectId.1"
-	$SSLServerId.InitializeFromValue("1.3.6.1.5.5.7.3.1")
-	$SSLObjectId.add($SSLServerId)
-	$SSLExtensions = New-Object -com "X509Enrollment.CX509ExtensionEnhancedKeyUsage.1"
-	$SSLExtensions.InitializeEncode($SSLObjectId)
-	$SSLCert = New-Object -com "X509Enrollment.CX509CertificateRequestCertificate.1"
-	$SSLCert.InitializeFromPrivateKey(2, $SSLKey, "")
-	$SSLCert.Subject = $SSLName
-	$SSLCert.Issuer = $SSLCert.Subject
-	$SSLCert.NotBefore = Get-Date
-	$SSLCert.NotAfter = $SSLCert.NotBefore.AddDays(1825)
-	$SSLCert.X509Extensions.Add($SSLExtensions)
-	$SSLCert.Encode()
-	$SSLEnrollment = New-Object -com "X509Enrollment.CX509Enrollment.1"
-	$SSLEnrollment.InitializeFromRequest($SSLCert)
-	$SSLEnrollment.CertificateFriendlyName = 'PoSHServer SSL Certificate'
-	$SSLCertdata = $SSLEnrollment.CreateRequest(0)
-	$SSLEnrollment.InstallResponse(2, $SSLCertdata, 0, "")
+  $SSLSubject = 'PoSHServer'
+  $SSLName = New-Object -com 'X509Enrollment.CX500DistinguishedName.1'
+  $SSLName.Encode("CN=$SSLSubject", 0)
+  $SSLKey = New-Object -com 'X509Enrollment.CX509PrivateKey.1'
+  $SSLKey.ProviderName = 'Microsoft RSA SChannel Cryptographic Provider'
+  $SSLKey.KeySpec = 1
+  $SSLKey.Length = 2048
+  $SSLKey.SecurityDescriptor = 'D:PAI(A;;0xd01f01ff;;;SY)(A;;0xd01f01ff;;;BA)(A;;0x80120089;;;NS)'
+  $SSLKey.MachineContext = 1
+  $SSLKey.ExportPolicy = 1
+  $SSLKey.Create()
+  $SSLObjectId = New-Object -com 'X509Enrollment.CObjectIds.1'
+  $SSLServerId = New-Object -com 'X509Enrollment.CObjectId.1'
+  $SSLServerId.InitializeFromValue('1.3.6.1.5.5.7.3.1')
+  $SSLObjectId.add($SSLServerId)
+  $SSLExtensions = New-Object -com 'X509Enrollment.CX509ExtensionEnhancedKeyUsage.1'
+  $SSLExtensions.InitializeEncode($SSLObjectId)
+  $SSLCert = New-Object -com 'X509Enrollment.CX509CertificateRequestCertificate.1'
+  $SSLCert.InitializeFromPrivateKey(2, $SSLKey, '')
+  $SSLCert.Subject = $SSLName
+  $SSLCert.Issuer = $SSLCert.Subject
+  $SSLCert.NotBefore = Get-Date
+  $SSLCert.NotAfter = $SSLCert.NotBefore.AddDays(1825)
+  $SSLCert.X509Extensions.Add($SSLExtensions)
+  $SSLCert.Encode()
+  $SSLEnrollment = New-Object -com 'X509Enrollment.CX509Enrollment.1'
+  $SSLEnrollment.InitializeFromRequest($SSLCert)
+  $SSLEnrollment.CertificateFriendlyName = 'PoSHServer SSL Certificate'
+  $SSLCertdata = $SSLEnrollment.CreateRequest(0)
+  $SSLEnrollment.InstallResponse(2, $SSLCertdata, 0, '')
 }
 
 function Register-PoSHCertificate {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to register PoSH Certificate
+      Function to register PoSH Certificate
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Register-PoSHCertificate -SSLIP "10.10.10.2" -SSLPort "8443" -Thumbprint "45F53D35AB630198F19A27931283"
+      Register-PoSHCertificate -SSLIP "10.10.10.2" -SSLPort "8443" -Thumbprint "45F53D35AB630198F19A27931283"
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'SSL IP Address')]
     [string]$SSLIP,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'SSL Port Number')]
     [string]$SSLPort,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'SSL Thumbprint')]
     $Thumbprint,
 	
-	[Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Debug Mode')]
     $DebugMode = $false
-)
+  )
 
-	$SSLIPAddresses = @($SSLIP.Split(","))
+  $SSLIPAddresses = @($SSLIP.Split(','))
 					
-	foreach ($SSLIPAddress in $SSLIPAddresses)
-	{
-		$IPPort = $SSLIPAddress + ":" + $SSLPort
+  foreach ($SSLIPAddress in $SSLIPAddresses)
+  {
+    $IPPort = $SSLIPAddress + ':' + $SSLPort
 		
-		if ($DebugMode)
-		{
-			# Remove Previous SSL Bindings
-			netsh http delete sslcert ipport="$IPPort"
+    if ($DebugMode)
+    {
+      # Remove Previous SSL Bindings
+      & "$env:windir\system32\netsh.exe" http delete sslcert ipport="$IPPort"
 			
-			# Add SSL Certificate
-			netsh http add sslcert ipport="$IPPort" certhash="$Thumbprint" appid="{00112233-4455-6677-8899-AABBCCDDEEFF}"
-		}
-		else
-		{		
-			# Remove Previous SSL Bindings
-			netsh http delete sslcert ipport="$IPPort" | Out-Null
+      # Add SSL Certificate
+      & "$env:windir\system32\netsh.exe" http add sslcert ipport="$IPPort" certhash="$Thumbprint" appid="{00112233-4455-6677-8899-AABBCCDDEEFF}"
+    }
+    else
+    {		
+      # Remove Previous SSL Bindings
+      & "$env:windir\system32\netsh.exe" http delete sslcert ipport="$IPPort" | Out-Null
 			
-			# Add SSL Certificate
-			netsh http add sslcert ipport="$IPPort" certhash="$Thumbprint" appid="{00112233-4455-6677-8899-AABBCCDDEEFF}" | Out-Null
-		}
-	}
+      # Add SSL Certificate
+      & "$env:windir\system32\netsh.exe" http add sslcert ipport="$IPPort" certhash="$Thumbprint" appid="{00112233-4455-6677-8899-AABBCCDDEEFF}" | Out-Null
+    }
+  }
 }
 
 function New-PoSHTimeStamp {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to generate time stamp
+      Function to generate time stamp
 
-    .EXAMPLE
+      .EXAMPLE
      
-        New-PoSHTimeStamp
+      New-PoSHTimeStamp
 		
-#>
+  #>
 
-    $now = Get-Date
-	$hr = $now.Hour.ToString()
-	$mi = $now.Minute.ToString()
-	$sd = $now.Second.ToString()
-	$ms = $now.Millisecond.ToString()
-	Write-Output $hr$mi$sd$ms
+  $now = Get-Date
+  $hr = $now.Hour.ToString()
+  $mi = $now.Minute.ToString()
+  $sd = $now.Second.ToString()
+  $ms = $now.Millisecond.ToString()
+  Write-Output -InputObject $hr$mi$sd$ms
 }
 
 function Invoke-AsyncHTTPRequest {
 
-<#
-    .SYNOPSIS
+  <#
+      .SYNOPSIS
      
-        Function to invoke async HTTP request
+      Function to invoke async HTTP request
 
-    .EXAMPLE
+      .EXAMPLE
      
-        Invoke-AsyncHTTPRequest
+      Invoke-AsyncHTTPRequest
 		
-#>
+  #>
 
-[CmdletBinding(SupportsShouldProcess = $true)]
-param (
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param (
 
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Script Block')]
     $ScriptBlock,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Listener')]
     $Listener,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Hostname')]
     $Hostname,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Hostnames')]
     $Hostnames,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Home Directory. Example: C:\inetpub\wwwroot')]
     [string]$HomeDirectory,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Log Directory. Example: C:\inetpub\wwwroot')]
     [string]$LogDirectory,
 	
-	[Parameter(
-        Mandatory = $false,
-        HelpMessage = 'PoSHServer Module Path')]
     [string]$PoSHModulePath,
 	
-	[Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Custom Child Config Path')]
     [string]$CustomChildConfig,
 	
-    [Parameter(
-        Mandatory = $false,
-        HelpMessage = 'Debug Mode')]
     [switch]$DebugMode = $false
-)
+  )
 
-	$Pipeline = [System.Management.Automation.PowerShell]::Create()
-	$Pipeline.AddScript($ScriptBlock)
-	$Pipeline.AddArgument($Listener)
-	$Pipeline.AddArgument($Hostname)
-	$Pipeline.AddArgument($Hostnames)
-	$Pipeline.AddArgument($HomeDirectory)
-	$Pipeline.AddArgument($LogDirectory)
-	$Pipeline.AddArgument($PoSHModulePath)
-	$Pipeline.AddArgument($CustomChildConfig)
-	$Pipeline.AddArgument($DebugMode)
-	$Pipeline.BeginInvoke()
+  $Pipeline = [System.Management.Automation.PowerShell]::Create()
+  $Pipeline.AddScript($ScriptBlock)
+  $Pipeline.AddArgument($Listener)
+  $Pipeline.AddArgument($Hostname)
+  $Pipeline.AddArgument($Hostnames)
+  $Pipeline.AddArgument($HomeDirectory)
+  $Pipeline.AddArgument($LogDirectory)
+  $Pipeline.AddArgument($PoSHModulePath)
+  $Pipeline.AddArgument($CustomChildConfig)
+  $Pipeline.AddArgument($DebugMode)
+  $Pipeline.BeginInvoke()
 }
