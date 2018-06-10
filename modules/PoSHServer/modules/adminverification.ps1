@@ -6,11 +6,11 @@
 # PoSH Server Admin Privileges Verification
 $Privileges = Confirm-PoSHAdminPrivileges
 
-if ($Privileges -ne "Validated")
+if ($Privileges -ne 'Validated')
 {
-	Write-Host " "
-	Write-Host "Please execute PoSH Server with administrative privileges."
-	Write-Host "Aborting.."
-	Write-Host " "
+	Write-Host ' '
+	Write-Host 'Please execute PoSH Server with administrative privileges.'
+	Write-Host 'Aborting..'
+	Write-Host ' '
 	$ShouldProcess = $false
 }

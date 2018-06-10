@@ -20,7 +20,7 @@ function Confirm-PoSHAdminPrivileges {
   if((New-Object -TypeName Security.Principal.WindowsPrincipal -ArgumentList $User).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) {
     $Result = 'Validated'
   }
-  Write-Output $Result
+  Write-Output -InputObject $Result
 }
 
 function Confirm-PoSHServerIP {
@@ -895,13 +895,13 @@ function Invoke-AsyncHTTPRequest {
   [CmdletBinding(SupportsShouldProcess = $true)]
   param (
 
-    $ScriptBlock,
+    [scriptblock]$ScriptBlock,
 	
-    $Listener,
+    [System.Net.HttpListener]$Listener,
 	
-    $Hostname,
+    [string]$Hostname,
 	
-    $Hostnames,
+    [string[]]$Hostnames,
 	
     [string]$HomeDirectory,
 	

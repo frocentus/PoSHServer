@@ -6,34 +6,34 @@
 # PoSH Server Configuration
 
 # Default Document
-$DefaultDocument = "index.ps1"
+$DefaultDocument = 'index.ps1'
 
 # Log Schedule
 # Options: Hourly, Daily
-$LogSchedule = "Daily"
+$LogSchedule = 'Daily'
 
 # Basic Authentication
 # Options: On, Off
-$BasicAuthentication = "Off"
+$BasicAuthentication = 'Off'
 
 # Windows Authentication
 # Options: On, Off
-$WindowsAuthentication = "Off"
+$WindowsAuthentication = 'Off'
 
-# DirectoryBrowsing
+# DirectoryBrowsings
 # Options: On, Off
-$DirectoryBrowsing = "Off"
+$DirectoryBrowsing = 'Off'
 
 # IP Restriction
 # Options: On, Off
-$IPRestriction = "Off"
-$IPWhiteList = "::1 127.0.0.1"
+$IPRestriction = 'Off'
+$IPWhiteList = '::1 127.0.0.1'
 
 # Content Filtering
 # Options: On, Off
-$ContentFiltering = "Off"
-$ContentFilterBlackList = "audio/mpeg video/mpeg"
+$ContentFiltering = 'Off'
+$ContentFilterBlackList = 'audio/mpeg video/mpeg'
 
 # PHP Cgi Path
-$PHPCgiPath = ($env:PATH).Split(";") | Select-String "PHP"
-$PHPCgiPath = [string]$PHPCgiPath + "\php-cgi.exe"
+$PHPCgiPath = ($env:PATH).Split(';') | Select-String -Pattern 'PHP'
+$PHPCgiPath = [string]$PHPCgiPath + '\php-cgi.exe'

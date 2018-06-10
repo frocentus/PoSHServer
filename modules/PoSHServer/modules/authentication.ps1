@@ -6,16 +6,16 @@
 # PoSH Server Authentication Module
 
 # Basic Authentication
-if ($BasicAuthentication -eq "On")
+if ($BasicAuthentication -eq 'On')
 {
-	$Identity = $Context.User.Identity;
+	$Identity = $Context.User.Identity
 	$PoSHUserName = $Identity.Name
 	$PoSHUserPassword = $Identity.Password
 }
 
 # Windows Authentication
-if ($WindowsAuthentication -eq "On")
+if ($WindowsAuthentication -eq 'On')
 {
-	$Identity = $Context.User.Identity;
+	$Identity = $Context.User.Identity
 	$PoSHUserName = $Identity.Name
 }
